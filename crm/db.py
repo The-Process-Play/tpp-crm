@@ -131,7 +131,7 @@ class CRMError(ValueError):
 
 
 def _now():
-    return _dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    return _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def _today():
@@ -584,7 +584,7 @@ def pipeline_summary(conn, owner=None, close_from=None, close_to=None):
 
 def stale_deals(conn, days=30, owner=None):
     """Open deals not touched in N days, or whose close date has passed."""
-    cutoff = (_dt.datetime.utcnow() - _dt.timedelta(days=int(days))).strftime("%Y-%m-%d %H:%M:%S")
+    cutoff = (_dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=int(days))).strftime("%Y-%m-%d %H:%M:%S")
     args = [cutoff, _today()]
     sql = DEAL_SELECT + " WHERE s.category = 'open' AND (d.updated_at < ? OR d.close_date < ?)"
     if owner:
