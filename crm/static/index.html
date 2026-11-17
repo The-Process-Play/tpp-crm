@@ -4,45 +4,70 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TPP CRM</title>
+<link rel="icon" type="image/svg+xml" href="/static/tpp-icon.svg">
 <style>
+/* Brand: The Process Play Branding Guidelines v1.2 (Nov 2024).
+   Typeface IBM Plex Sans (self-hosted, SIL OFL: static/fonts/OFL.txt).
+   Core blues: #467ea1 ("the"), #385575 ("process"), #283a5f ("play"); grey #808080.
+   The logo is the locked vector artwork from the guidelines (static/tpp-logo.svg): never retype or recolour it,
+   except the approved white version on dark backgrounds. */
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url(/static/fonts/ibm-plex-sans-latin-ext.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url(/static/fonts/ibm-plex-sans-latin.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 :root {
-  --bg: #f6f7f9; --panel: #ffffff; --ink: #1c2330; --muted: #667085; --line: #e3e6eb;
-  --accent: #2f5bea; --accent-soft: rgba(47,91,234,.10); --won: #1a7f4b; --lost: #b42318; --warn: #b54708;
-  --parked: #8a8f98; --chip: #eef1f6;
+  --tpp-1: #467ea1; --tpp-2: #385575; --tpp-3: #283a5f; --tpp-grey: #808080;
+  --tpp-gradient: linear-gradient(90deg, var(--tpp-1), var(--tpp-2) 55%, var(--tpp-3));
+  --bg: #f3f6f9; --panel: #ffffff; --ink: #1d2737; --heading: var(--tpp-3); --muted: #5a687a; --line: #dbe2ea;
+  --accent: var(--tpp-2); --accent-strong: var(--tpp-3); --accent-soft: rgba(70,126,161,.12);
+  --btn: var(--tpp-2); --btn-hover: var(--tpp-3); --chip: #e9eff5; --logo-filter: none;
+  --won: #1a7f4b; --lost: #b42318; --warn: #b54708; --parked: var(--tpp-grey);
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #12151b; --panel: #1b2029; --ink: #e7eaf0; --muted: #9aa3b2; --line: #2b3240;
-          --accent: #7b9bff; --accent-soft: rgba(123,155,255,.14); --won: #4cc38a; --lost: #ff7b6b; --warn: #f5a35c;
-          --parked: #8a8f98; --chip: #252c38; }
+  :root { --bg: #0e1622; --panel: #162131; --ink: #e5ecf4; --heading: #f2f6fa; --muted: #9fb0c3; --line: #263549;
+          --accent: #8db8d6; --accent-strong: #b5d2e6; --accent-soft: rgba(141,184,214,.15);
+          --btn: var(--tpp-2); --btn-hover: var(--tpp-1); --chip: #1c2a3d; --logo-filter: brightness(0) invert(1);
+          --won: #4cc38a; --lost: #ff8a7a; --warn: #f5a35c; --parked: #a3a9b1; }
 }
 * { box-sizing: border-box; }
-body { margin: 0; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
-header { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 14px 20px; background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2; }
-header h1 { font-size: 16px; margin: 0 10px 0 0; }
+body { margin: 0; font: 14px/1.45 "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+h1, h2, h3 { color: var(--heading); }
+header { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 14px 20px 17px; background: var(--panel); position: sticky; top: 0; z-index: 2; box-shadow: 0 1px 0 var(--line); }
+header::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--tpp-gradient); }
+.brand { display: flex; align-items: center; gap: 0; margin: 0 12px 0 0; padding: 0 12px 0 0; border-right: 1px solid var(--line); text-decoration: none; }
+.brand img { display: block; height: 24px; width: auto; margin-right: 12px; filter: var(--logo-filter); } /* >=12px clear on every side = the guide's 'y'-width exclusion zone at this size */
+.brand span { font-weight: 600; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 input, select, textarea, button { font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; }
 button { cursor: pointer; }
-button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+button.primary { background: var(--btn); color: #fff; border-color: var(--btn); font-weight: 500; }
+button.primary:hover { background: var(--btn-hover); border-color: var(--btn-hover); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--tpp-1); outline-offset: 1px; }
 button.link { border: 0; padding: 0; background: none; color: var(--accent); cursor: pointer; text-align: left; }
 .tabs { display: flex; gap: 4px; }
-.tabs button.active { background: var(--chip); font-weight: 600; }
+.tabs button { border-color: transparent; background: none; color: var(--muted); font-weight: 500; }
+.tabs button.active { background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
 .check { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
 .spacer { flex: 1; }
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; padding: 16px 20px 0; }
 .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
-.kpi .v { font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.kpi { border-top: 3px solid var(--tpp-1); }
+.kpi:nth-child(2) { border-top-color: var(--tpp-2); } .kpi:nth-child(4), .kpi:nth-child(5) { border-top-color: var(--tpp-3); }
+.kpi .v { font-size: 22px; font-weight: 600; color: var(--heading); font-variant-numeric: tabular-nums; }
 .kpi .l { color: var(--muted); font-size: 12px; }
-.kpi.warn .v { color: var(--warn); }
+.kpi.warn { border-top-color: var(--warn); } .kpi.warn .v { color: var(--warn); }
 main { padding: 16px 20px 90px; }
 .hint { color: var(--muted); font-size: 12px; margin: 0 0 10px; }
 .board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
-.col { background: var(--chip); border-radius: 10px; padding: 10px; min-height: 160px; border: 2px dashed transparent; transition: border-color .1s, background .1s; }
+.col { background: var(--chip); border-radius: 10px; padding: 10px; border-top: 3px solid var(--stage, var(--tpp-2)) !important; min-height: 160px; border: 2px dashed transparent; transition: border-color .1s, background .1s; }
 .col.over, .dropzone.over { border-color: var(--accent); background: var(--accent-soft); }
-.col h3 { margin: 0 0 2px; font-size: 13px; }
+.col h3 { margin: 0 0 2px; font-size: 13px; font-weight: 600; }
 .col .sub { color: var(--muted); font-size: 12px; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; margin-bottom: 8px; cursor: grab; }
 .card:hover { border-color: var(--accent); }
 .card.dragging { opacity: .4; }
-.card .n { font-weight: 600; }
+.card .n { font-weight: 500; color: var(--heading); }
 .card .m { color: var(--muted); font-size: 12px; display: flex; justify-content: space-between; gap: 6px; }
 .overdue { color: var(--warn); font-weight: 600; }
 .dropbar { position: fixed; left: 0; right: 0; bottom: 0; display: none; gap: 10px; padding: 12px 20px; background: var(--panel); border-top: 1px solid var(--line); box-shadow: 0 -6px 18px rgba(0,0,0,.08); z-index: 3; }
@@ -62,8 +87,8 @@ tbody tr.click:hover td { background: var(--chip); cursor: pointer; }
 .empty { color: var(--muted); padding: 24px; text-align: center; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
 .drawer { position: fixed; top: 0; right: 0; height: 100%; width: min(540px, 100%); background: var(--panel); border-left: 1px solid var(--line); box-shadow: -8px 0 24px rgba(0,0,0,.12); padding: 18px 20px; overflow-y: auto; transform: translateX(100%); transition: transform .18s ease; z-index: 5; }
 .drawer.open { transform: none; }
-.drawer h2 { margin: 0 0 12px; font-size: 18px; }
-.drawer h3 { margin: 22px 0 8px; font-size: 14px; }
+.drawer h2 { margin: 0 0 12px; font-size: 19px; font-weight: 600; }
+.drawer h3 { margin: 22px 0 8px; font-size: 14px; font-weight: 600; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .grid2 label, .full { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
 .full { margin-top: 10px; }
@@ -71,15 +96,15 @@ tbody tr.click:hover td { background: var(--chip); cursor: pointer; }
 .act { border-top: 1px solid var(--line); padding: 8px 0; }
 .act .t, .hist { color: var(--muted); font-size: 12px; }
 .mini { border-top: 1px solid var(--line); padding: 7px 0; display: flex; justify-content: space-between; gap: 10px; }
-.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity .2s; display: flex; gap: 12px; align-items: center; z-index: 10; }
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--tpp-3); color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.18); padding: 8px 14px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity .2s; display: flex; gap: 12px; align-items: center; z-index: 10; }
 .toast.show { opacity: 1; pointer-events: auto; }
-.toast button { background: none; border: 0; color: var(--bg); font-weight: 700; text-decoration: underline; padding: 0; }
-@media (max-width: 640px) { header { padding: 12px 16px; } main, .kpis { padding-left: 16px; padding-right: 16px; } .grid2 { grid-template-columns: 1fr; } #q { min-width: 0 !important; flex: 1; } }
+.toast button { background: none; border: 0; color: #fff; font-weight: 700; text-decoration: underline; padding: 0; }
+@media (max-width: 640px) { header { padding: 8px 16px 13px; } .brand { border-right: 0; flex-basis: 100%; } main, .kpis { padding-left: 16px; padding-right: 16px; } .kpis { grid-template-columns: 1fr 1fr; gap: 8px; } .kpi { padding: 10px 12px; } .kpi .v { font-size: 18px; } .grid2 { grid-template-columns: 1fr; } #q { min-width: 0 !important; flex: 1; } }
 </style>
 </head>
 <body>
 <header>
-  <h1>TPP CRM</h1>
+  <a class="brand" href="/" aria-label="The Process Play CRM home"><img src="/static/tpp-logo.svg" alt="The Process Play" width="172" height="24"><span>CRM</span></a>
   <div class="tabs">
     <button data-view="board" class="active">Pipeline</button><button data-view="table">All deals</button><button data-view="tasks">Tasks</button>
   </div>
@@ -186,6 +211,14 @@ function card(d) {
   return el;
 }
 
+// Column accents follow the brand "journey": lightest blue at the start of the pipeline, deepest at the end.
+function stageColour(st, cols) {
+  if (st.category === "won") return "var(--won)";
+  const open = cols.filter(c => c.category === "open"), t = open.length > 1 ? open.indexOf(st) / (open.length - 1) : 0;
+  const stops = [[0x46, 0x7e, 0xa1], [0x38, 0x55, 0x75], [0x28, 0x3a, 0x5f]];
+  const seg = t < .5 ? 0 : 1, f = t < .5 ? t * 2 : (t - .5) * 2;
+  return "rgb(" + stops[seg].map((v, i) => Math.round(v + (stops[seg + 1][i] - v) * f)).join(",") + ")";
+}
 function renderBoard() {
   const deals = shownDeals();
   const cols = META.stages.filter(s => s.category === "open" || s.category === "won");
@@ -195,7 +228,7 @@ function renderBoard() {
       const ds = deals.filter(d => d.stage === st.name).sort((a, b) => (b.amount || 0) - (a.amount || 0));
       const total = ds.reduce((a, d) => a + (d.amount || 0), 0), od = ds.filter(isOverdue).length;
       const shown = st.category === "won" ? ds.slice(0, 15) : ds;
-      return dropTarget(h("div", { class: "col" }, h("h3", {}, st.name),
+      return dropTarget(h("div", { class: "col", style: "--stage:" + stageColour(st, cols) }, h("h3", {}, st.name),
         h("div", { class: "sub" }, `${ds.length} · ${gbp(total)}`, od ? h("span", { class: "overdue" }, ` · ${od} overdue`) : null),
         shown.map(card),
         ds.length > shown.length ? h("div", { class: "sub" }, `+ ${ds.length - shown.length} more in All deals`) : null), st.name);

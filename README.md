@@ -63,6 +63,11 @@ Set `DATABASE_URL=postgresql://...` to run any of these against Postgres instead
 
 Drag and drop needs a mouse or trackpad. On a phone, change the stage in the deal panel.
 
+The app follows The Process Play Branding Guidelines v1.2: IBM Plex Sans (served by the app itself,
+licence in `crm/static/fonts/OFL.txt`), the three brand blues, and the locked vector logo and play icon
+taken directly from the guidelines PDF (`crm/static/tpp-logo.svg`, `tpp-icon.svg`). In dark mode the
+logo switches to the approved white version. Green, red and amber are used only for won, lost and overdue.
+
 ## Using it through Claude
 
 **Claude Code:** open a session in this folder and approve the `tpp-crm` server. Set your name for the

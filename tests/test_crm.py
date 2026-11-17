@@ -214,6 +214,14 @@ class Base:
                 return e.code, json.loads(e.read())
         try:
             self.assertEqual(call("/healthz"), (200, {"status": "ok"}))
+            for path, ctype in (("/static/tpp-logo.svg", "image/svg+xml"),
+                                ("/static/fonts/ibm-plex-sans-latin.woff2", "font/woff2")):
+                with urllib.request.urlopen(base + path) as r:
+                    self.assertEqual((r.status, r.headers["Content-Type"]), (200, ctype))
+            for bad in ("/static/../db.py", "/static/fonts/../../web.py", "/static/index.html",
+                        "/static/x/tpp-logo.svg", "/static/%2e%2e%2fdb.py", "/static/missing.svg"):
+                status, _ = call(bad)
+                self.assertEqual(status, 404, bad)
             status, deals = call("/api/deals?owner=Ben")
             self.assertEqual((status, len(deals)), (200, 2))
             status, d = call("/api/deal/%d" % self.b["id"], {"stage": "Negotiation"})

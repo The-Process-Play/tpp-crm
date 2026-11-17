@@ -14,6 +14,7 @@ Standard library only (plus psycopg when DATABASE_URL is set).
 import argparse
 import json
 import os
+import re
 import sys
 import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -22,7 +23,10 @@ from urllib.parse import parse_qs, urlparse
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from crm import db  # noqa: E402
 
-STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "index.html")
+STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+STATIC = os.path.join(STATIC_DIR, "index.html")
+STATIC_TYPES = {".svg": "image/svg+xml", ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8"}
+STATIC_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 UPDATABLE = ("name", "company", "stage", "amount", "close_date", "owner", "next_step")
 EASY_AUTH_HEADER = "X-MS-CLIENT-PRINCIPAL-NAME"
 SECURITY_HEADERS = {
@@ -48,13 +52,13 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):  # quieter console: method, path, status
         sys.stderr.write("%s %s %s\n" % (self.command, self.path.split("?")[0], args[1] if len(args) > 1 else ""))
 
-    def _send(self, status, body, ctype="application/json"):
+    def _send(self, status, body, ctype="application/json", cache=None):
         data = body if isinstance(body, bytes) else json.dumps(body, default=str).encode()
         self.send_response(status)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
         for k, v in SECURITY_HEADERS.items():
-            self.send_header(k, v)
+            self.send_header(k, cache if (k == "Cache-Control" and cache) else v)
         self.end_headers()
         self.wfile.write(data)
 
@@ -98,6 +102,8 @@ class Handler(BaseHTTPRequestHandler):
             if method == "GET" and not parts:
                 with open(STATIC, "rb") as f:
                     return self._send(200, f.read(), "text/html; charset=utf-8")
+            if method == "GET" and parts[:1] == ["static"]:
+                return self._static(parts[1:])
             if parts[:1] != ["api"]:
                 return self._send(404, {"error": "not found"})
             api = parts[1:]
@@ -160,6 +166,20 @@ class Handler(BaseHTTPRequestHandler):
         finally:
             if conn is not None:
                 conn.close()
+
+    def _static(self, parts):
+        """Serve brand assets (logo, icon, fonts). Only plain file names in known folders."""
+        if not (1 <= len(parts) <= 2) or (len(parts) == 2 and parts[0] != "fonts"):
+            return self._send(404, {"error": "not found"})
+        name = parts[-1]
+        ctype = STATIC_TYPES.get(os.path.splitext(name)[1])
+        if not ctype or not STATIC_NAME.match(name):
+            return self._send(404, {"error": "not found"})
+        path = os.path.join(STATIC_DIR, *parts)
+        if not os.path.isfile(path):
+            return self._send(404, {"error": "not found"})
+        with open(path, "rb") as f:
+            return self._send(200, f.read(), ctype, cache="public, max-age=86400")
 
     def do_GET(self):
         self._route("GET")
