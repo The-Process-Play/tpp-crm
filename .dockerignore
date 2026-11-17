@@ -1,0 +1,10 @@
+.git
+.github
+.venv
+.claude
+data
+docs
+tests
+**/__pycache__
+*.md
+.mcp.json

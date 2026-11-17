@@ -1,0 +1,21 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# CRM data: client and deal information must never be committed
+data/
+*.db
+*.db-wal
+*.db-shm
+*.xls
+*.xlsx
+*.csv
+
+# Local settings and secrets
+.env
+.env.*
+.claude/settings.local.json
+
+# macOS
+.DS_Store

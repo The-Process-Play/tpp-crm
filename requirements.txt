@@ -1,0 +1,4 @@
+# Runtime: Postgres driver (only needed when DATABASE_URL is set; SQLite needs nothing)
+psycopg[binary]==3.2.10
+# Importing HubSpot .xls exports
+xlrd==2.0.1

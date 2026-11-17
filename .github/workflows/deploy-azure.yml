@@ -1,0 +1,54 @@
+name: Deploy to Azure
+
+# Manual for now: run it from the Actions tab once the Azure resources in docs/AZURE.md exist.
+# Switch to `on: push: branches: [main]` when you're happy for every merge to go live.
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # sign in to Azure with OpenID Connect: no stored passwords
+  contents: read
+
+concurrency:
+  group: deploy-azure
+  cancel-in-progress: false
+
+env:
+  IMAGE: tpp-crm
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production   # add required reviewers to this environment in repo settings
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sign in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build image in Azure Container Registry
+        run: |
+          az acr build \
+            --registry "${{ vars.AZURE_ACR_NAME }}" \
+            --image "$IMAGE:${{ github.sha }}" \
+            --image "$IMAGE:latest" \
+            .
+
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          images: ${{ vars.AZURE_ACR_NAME }}.azurecr.io/tpp-crm:${{ github.sha }}
+
+      - name: Check the app is healthy
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://${{ vars.AZURE_WEBAPP_NAME }}.azurewebsites.net/healthz" || true)
+            [ "$code" = "200" ] && echo "Healthy" && exit 0
+            sleep 10
+          done
+          echo "App did not report healthy within 5 minutes (last status: $code)" && exit 1

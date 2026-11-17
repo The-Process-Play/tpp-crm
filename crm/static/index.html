@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TPP CRM</title>
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --ink: #1c2330; --muted: #667085; --line: #e3e6eb;
+  --accent: #2f5bea; --accent-soft: rgba(47,91,234,.10); --won: #1a7f4b; --lost: #b42318; --warn: #b54708;
+  --parked: #8a8f98; --chip: #eef1f6;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #12151b; --panel: #1b2029; --ink: #e7eaf0; --muted: #9aa3b2; --line: #2b3240;
+          --accent: #7b9bff; --accent-soft: rgba(123,155,255,.14); --won: #4cc38a; --lost: #ff7b6b; --warn: #f5a35c;
+          --parked: #8a8f98; --chip: #252c38; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+header { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 14px 20px; background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2; }
+header h1 { font-size: 16px; margin: 0 10px 0 0; }
+input, select, textarea, button { font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; }
+button { cursor: pointer; }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+button.link { border: 0; padding: 0; background: none; color: var(--accent); cursor: pointer; text-align: left; }
+.tabs { display: flex; gap: 4px; }
+.tabs button.active { background: var(--chip); font-weight: 600; }
+.check { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.spacer { flex: 1; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; padding: 16px 20px 0; }
+.kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.kpi .v { font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.kpi .l { color: var(--muted); font-size: 12px; }
+.kpi.warn .v { color: var(--warn); }
+main { padding: 16px 20px 90px; }
+.hint { color: var(--muted); font-size: 12px; margin: 0 0 10px; }
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+.col { background: var(--chip); border-radius: 10px; padding: 10px; min-height: 160px; border: 2px dashed transparent; transition: border-color .1s, background .1s; }
+.col.over, .dropzone.over { border-color: var(--accent); background: var(--accent-soft); }
+.col h3 { margin: 0 0 2px; font-size: 13px; }
+.col .sub { color: var(--muted); font-size: 12px; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; margin-bottom: 8px; cursor: grab; }
+.card:hover { border-color: var(--accent); }
+.card.dragging { opacity: .4; }
+.card .n { font-weight: 600; }
+.card .m { color: var(--muted); font-size: 12px; display: flex; justify-content: space-between; gap: 6px; }
+.overdue { color: var(--warn); font-weight: 600; }
+.dropbar { position: fixed; left: 0; right: 0; bottom: 0; display: none; gap: 10px; padding: 12px 20px; background: var(--panel); border-top: 1px solid var(--line); box-shadow: 0 -6px 18px rgba(0,0,0,.08); z-index: 3; }
+body.is-dragging .dropbar { display: flex; }
+.dropzone { flex: 1; text-align: center; padding: 14px 8px; border: 2px dashed var(--line); border-radius: 10px; color: var(--muted); font-weight: 600; }
+.dropzone.lost { color: var(--lost); }
+table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; color: var(--muted); font-weight: 600; }
+th.sortable { cursor: pointer; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr.click:hover td { background: var(--chip); cursor: pointer; }
+.wrap { overflow-x: auto; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12px; background: var(--chip); white-space: nowrap; }
+.pill.won { color: var(--won); } .pill.lost { color: var(--lost); } .pill.parked { color: var(--parked); }
+.done td { color: var(--muted); text-decoration: line-through; }
+.empty { color: var(--muted); padding: 24px; text-align: center; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.drawer { position: fixed; top: 0; right: 0; height: 100%; width: min(540px, 100%); background: var(--panel); border-left: 1px solid var(--line); box-shadow: -8px 0 24px rgba(0,0,0,.12); padding: 18px 20px; overflow-y: auto; transform: translateX(100%); transition: transform .18s ease; z-index: 5; }
+.drawer.open { transform: none; }
+.drawer h2 { margin: 0 0 12px; font-size: 18px; }
+.drawer h3 { margin: 22px 0 8px; font-size: 14px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid2 label, .full { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.full { margin-top: 10px; }
+.row { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
+.act { border-top: 1px solid var(--line); padding: 8px 0; }
+.act .t, .hist { color: var(--muted); font-size: 12px; }
+.mini { border-top: 1px solid var(--line); padding: 7px 0; display: flex; justify-content: space-between; gap: 10px; }
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity .2s; display: flex; gap: 12px; align-items: center; z-index: 10; }
+.toast.show { opacity: 1; pointer-events: auto; }
+.toast button { background: none; border: 0; color: var(--bg); font-weight: 700; text-decoration: underline; padding: 0; }
+@media (max-width: 640px) { header { padding: 12px 16px; } main, .kpis { padding-left: 16px; padding-right: 16px; } .grid2 { grid-template-columns: 1fr; } #q { min-width: 0 !important; flex: 1; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>TPP CRM</h1>
+  <div class="tabs">
+    <button data-view="board" class="active">Pipeline</button><button data-view="table">All deals</button><button data-view="tasks">Tasks</button>
+  </div>
+  <input id="q" type="search" placeholder="Search deals or companies" style="min-width:220px">
+  <select id="owner"><option value="">All owners</option></select>
+  <label class="check"><input type="checkbox" id="overdueOnly"> Overdue only</label>
+  <span class="spacer"></span>
+  <button id="exportCsv" title="Download the deals currently shown">Export CSV</button>
+  <button class="primary" id="newDeal">+ New deal</button>
+</header>
+<section class="kpis" id="kpis"></section>
+<main><div id="view"></div></main>
+<div class="dropbar" id="dropbar"></div>
+<aside class="drawer" id="drawer"></aside>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const gbp = v => v == null ? "—" : "£" + Number(v).toLocaleString("en-GB", { maximumFractionDigits: 0 });
+const pad = n => String(n).padStart(2, "0");
+const now = new Date(); const TODAY = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+const isOverdue = d => d.stage_category === "open" && d.close_date && d.close_date < TODAY;
+let META = { stages: [], owners: [] }, DEALS = [], VIEW = "board", SORT = "stage", DRAG_ID = null;
+
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") el.className = v; else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "checked" || k === "draggable") el[k] = v; else if (v != null) el.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null) el.append(k instanceof Node ? k : document.createTextNode(String(k)));
+  return el;
+}
+async function api(path, body) {
+  const res = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+let toastTimer;
+function toast(msg, actionLabel, action) {
+  const t = $("#toast");
+  t.replaceChildren(h("span", {}, msg), actionLabel ? h("button", { onclick: () => { t.classList.remove("show"); action(); } }, actionLabel) : null);
+  t.classList.add("show"); clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), actionLabel ? 8000 : 2200);
+}
+const shownDeals = () => $("#overdueOnly").checked ? DEALS.filter(isOverdue) : DEALS;
+
+async function load() {
+  if (VIEW === "tasks") return loadTasks();
+  const p = new URLSearchParams({ sort: SORT, limit: 500 });
+  if ($("#q").value) p.set("query", $("#q").value);
+  if ($("#owner").value) p.set("owner", $("#owner").value);
+  const [deals, sum] = await Promise.all([api("/api/deals?" + p), api("/api/summary?" + new URLSearchParams({ owner: $("#owner").value }))]);
+  DEALS = deals;
+  renderKpis(sum);
+  render();
+}
+function render() { VIEW === "board" ? renderBoard() : renderTable(); }
+
+function renderKpis(s) {
+  const open = s.by_stage.filter(r => r.category === "open").reduce((a, r) => a + r.deals, 0);
+  const od = DEALS.filter(isOverdue), odVal = od.reduce((a, d) => a + (d.amount || 0), 0);
+  const kpi = (v, l, cls = "") => h("div", { class: "kpi " + cls }, h("div", { class: "v" }, v), h("div", { class: "l" }, l));
+  $("#kpis").replaceChildren(
+    kpi(gbp(s.open_pipeline_value), `Open pipeline · ${open} deals`),
+    kpi(gbp(s.weighted_pipeline_value), "Weighted pipeline"),
+    kpi(gbp(odVal), `Past close date · ${od.length} deals`, od.length ? "warn" : ""),
+    kpi(gbp(s.won_value), "Won (all time)"),
+    kpi(s.win_rate_pct == null ? "—" : s.win_rate_pct + "%", "Win rate (by count)"));
+}
+
+/* ---------- drag and drop ---------- */
+function dropTarget(el, stage) {
+  el.addEventListener("dragover", e => { if (DRAG_ID != null) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; el.classList.add("over"); } });
+  el.addEventListener("dragleave", e => { if (!el.contains(e.relatedTarget)) el.classList.remove("over"); });
+  el.addEventListener("drop", e => { e.preventDefault(); el.classList.remove("over"); const id = DRAG_ID; DRAG_ID = null; moveDeal(id, stage); });
+  return el;
+}
+async function moveDeal(id, stage, isUndo = false) {
+  const d = DEALS.find(x => x.id === id);
+  if (!d || d.stage === stage) return;
+  const prev = d.stage, prevCat = d.stage_category;
+  d.stage = stage; d.stage_category = META.stages.find(s => s.name === stage).category;
+  render();                                   // optimistic: move the card straight away
+  try {
+    await api("/api/deal/" + id, { stage });
+    if (!isUndo) toast(`Moved “${d.name}” to ${stage}`, "Undo", () => moveDeal(id, prev, true));
+    load();                                     // refresh totals
+  } catch (e) {
+    d.stage = prev; d.stage_category = prevCat; render(); toast("Couldn’t move deal: " + e.message);
+  }
+}
+function card(d) {
+  const el = h("div", { class: "card", draggable: true, onclick: () => openDeal(d.id) },
+    h("div", { class: "n" }, d.name),
+    h("div", { class: "m" }, h("span", {}, d.owner || "Unassigned"), h("span", {}, gbp(d.amount))),
+    d.close_date ? h("div", { class: "m" }, isOverdue(d) ? h("span", { class: "overdue" }, "Overdue · " + d.close_date) : h("span", {}, "Close " + d.close_date)) : null);
+  el.addEventListener("dragstart", e => {
+    DRAG_ID = d.id; e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", String(d.id));
+    el.classList.add("dragging"); document.body.classList.add("is-dragging");
+  });
+  el.addEventListener("dragend", () => { el.classList.remove("dragging"); document.body.classList.remove("is-dragging"); DRAG_ID = null; });
+  return el;
+}
+
+function renderBoard() {
+  const deals = shownDeals();
+  const cols = META.stages.filter(s => s.category === "open" || s.category === "won");
+  $("#view").replaceChildren(
+    h("p", { class: "hint" }, "Drag a card to another column to change its stage. Drop on the bar at the bottom to close it as lost or park it."),
+    h("div", { class: "board" }, cols.map(st => {
+      const ds = deals.filter(d => d.stage === st.name).sort((a, b) => (b.amount || 0) - (a.amount || 0));
+      const total = ds.reduce((a, d) => a + (d.amount || 0), 0), od = ds.filter(isOverdue).length;
+      const shown = st.category === "won" ? ds.slice(0, 15) : ds;
+      return dropTarget(h("div", { class: "col" }, h("h3", {}, st.name),
+        h("div", { class: "sub" }, `${ds.length} · ${gbp(total)}`, od ? h("span", { class: "overdue" }, ` · ${od} overdue`) : null),
+        shown.map(card),
+        ds.length > shown.length ? h("div", { class: "sub" }, `+ ${ds.length - shown.length} more in All deals`) : null), st.name);
+    })));
+  $("#dropbar").replaceChildren(...META.stages.filter(s => s.category === "lost" || s.category === "parked")
+    .map(s => dropTarget(h("div", { class: "dropzone " + s.category }, s.name), s.name)));
+}
+
+function renderTable() {
+  const deals = shownDeals();
+  if (!deals.length) return $("#view").replaceChildren(h("div", { class: "empty" }, "No deals match these filters."));
+  const cols = [["name", "Deal", "name"], ["company", "Company"], ["stage", "Stage", "stage"], ["amount", "Amount", "amount", "num"], ["close_date", "Close date", "close_date"], ["owner", "Owner"]];
+  $("#view").replaceChildren(h("div", { class: "wrap" }, h("table", {},
+    h("thead", {}, h("tr", {}, cols.map(([k, l, sortKey, c]) => h("th", { class: (c || "") + (sortKey ? " sortable" : ""), onclick: sortKey ? () => { SORT = sortKey; load(); } : null }, l + (SORT === sortKey ? " ▾" : ""))))),
+    h("tbody", {}, deals.map(d => h("tr", { class: "click", onclick: () => openDeal(d.id) },
+      h("td", {}, d.name),
+      h("td", {}, d.company ? h("button", { class: "link", onclick: e => { e.stopPropagation(); openCompany(d.company); } }, d.company) : ""),
+      h("td", {}, h("span", { class: "pill " + d.stage_category }, d.stage)),
+      h("td", { class: "num" }, gbp(d.amount)),
+      h("td", { class: isOverdue(d) ? "overdue" : "" }, d.close_date || ""),
+      h("td", {}, d.owner || "")))))));
+}
+
+/* ---------- tasks ---------- */
+async function loadTasks() {
+  const showDone = $("#view").dataset.showDone === "1";
+  const tasks = await api("/api/tasks?" + new URLSearchParams({ owner: $("#owner").value, include_done: showDone ? "1" : "0" }));
+  const q = $("#q").value.toLowerCase();
+  const list = tasks.filter(t => !q || (t.body + " " + (t.deal || "")).toLowerCase().includes(q));
+  const toggle = h("label", { class: "check" }, h("input", { type: "checkbox", checked: showDone, onchange: e => { $("#view").dataset.showDone = e.target.checked ? "1" : "0"; loadTasks(); } }), "Show completed");
+  $("#view").replaceChildren(h("div", { class: "row", style: "margin:0 0 10px" }, h("span", { class: "hint", style: "margin:0" }, `${list.filter(t => !t.done).length} open tasks. Add tasks from a deal’s Activity section.`), h("span", { class: "spacer" }), toggle),
+    list.length ? h("div", { class: "wrap" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", {}, ""), h("th", {}, "Task"), h("th", {}, "Deal"), h("th", {}, "Owner"), h("th", {}, "Due"))),
+      h("tbody", {}, list.map(t => h("tr", { class: t.done ? "done" : "" },
+        h("td", {}, h("input", { type: "checkbox", checked: !!t.done, title: "Mark done", onchange: async e => {
+          try { await api(`/api/task/${t.id}/done`, { done: e.target.checked }); toast(e.target.checked ? "Task done" : "Task reopened"); loadTasks(); } catch (err) { toast(err.message); } } })),
+        h("td", {}, t.body),
+        h("td", {}, t.deal_id ? h("button", { class: "link", onclick: () => openDeal(t.deal_id) }, t.deal) : ""),
+        h("td", {}, t.owner || t.author || ""),
+        h("td", { class: !t.done && t.due_date && t.due_date < TODAY ? "overdue" : "" }, t.due_date || ""))))))
+      : h("div", { class: "empty" }, "No tasks yet."));
+}
+
+/* ---------- drawers ---------- */
+function field(label, name, value, type = "text") {
+  if (name === "stage") return h("label", {}, label, h("select", { name }, META.stages.map(s => { const o = h("option", { value: s.name }, s.name); if (s.name === value) o.selected = true; return o; })));
+  if (name === "owner") return h("label", {}, label, h("input", { name, value: value || "", list: "owners" }));
+  return h("label", {}, label, h("input", { name, type, value: value ?? "", step: type === "number" ? "any" : null }));
+}
+function formValues(form) {
+  const out = {};
+  form.querySelectorAll("[name]").forEach(el => { out[el.name] = el.type === "number" ? (el.value === "" ? null : Number(el.value)) : el.value; });
+  return out;
+}
+const closeBtn = () => h("button", { onclick: closeDrawer }, "Close");
+function showDrawer(...kids) { $("#drawer").replaceChildren(...kids); $("#drawer").classList.add("open"); }
+function closeDrawer() { $("#drawer").classList.remove("open"); }
+
+async function openDeal(id) {
+  const d = await api("/api/deal/" + id);
+  const form = h("div", {},
+    h("div", { class: "grid2" }, field("Deal name", "name", d.name), field("Company", "company", d.company), field("Stage", "stage", d.stage),
+      field("Amount (£)", "amount", d.amount, "number"), field("Close date", "close_date", d.close_date, "date"), field("Owner", "owner", d.owner)),
+    h("label", { class: "full" }, "Next step", h("input", { name: "next_step", value: d.next_step || "" })));
+  const note = h("textarea", { rows: 3, placeholder: "Add a note, call summary or task…", style: "width:100%" });
+  const type = h("select", {}, ["note", "call", "meeting", "email", "task"].map(t => h("option", { value: t }, t)));
+  const due = h("input", { type: "date", title: "Due date (tasks)" });
+  showDrawer(
+    h("div", { class: "row", style: "margin-top:0" }, h("span", { class: "pill " + d.stage_category }, d.stage),
+      isOverdue(d) ? h("span", { class: "overdue" }, "Past close date") : null, h("span", { class: "spacer" }), closeBtn()),
+    h("h2", {}, d.name),
+    d.company ? h("p", { style: "margin:-6px 0 14px" }, h("button", { class: "link", onclick: () => openCompany(d.company) }, "View " + d.company + " →")) : null,
+    form,
+    h("div", { class: "row" }, h("button", { class: "primary", onclick: async () => {
+      try { await api("/api/deal/" + id, formValues(form)); toast("Saved"); load(); openDeal(id); } catch (e) { toast(e.message); } } }, "Save changes"),
+      d.hubspot_id ? h("span", { class: "hist" }, "HubSpot ID " + d.hubspot_id) : null),
+    h("h3", {}, "Activity"),
+    note, h("div", { class: "row", style: "margin-top:6px" }, type, due, h("button", { onclick: async () => {
+      try { await api(`/api/deal/${id}/activity`, { body: note.value, type: type.value, due_date: due.value }); toast("Logged"); openDeal(id); if (VIEW === "tasks") loadTasks(); } catch (e) { toast(e.message); } } }, "Add")),
+    d.activities.length ? d.activities.map(a => h("div", { class: "act" }, h("div", { class: "t" }, `${a.type}${a.due_date ? " · due " + a.due_date : ""}${a.type === "task" ? (a.done ? " · done" : " · open") : ""} · ${a.author || ""} · ${a.created_at}`), h("div", {}, a.body)))
+      : h("p", { class: "hist" }, "No activity yet."),
+    h("h3", {}, "History"),
+    d.history.length ? d.history.map(x => h("div", { class: "hist" }, `${x.changed_at} · ${x.changed_by || "?"} · ${x.field}: ${x.old_value ?? "—"} → ${x.new_value ?? "—"}`))
+      : h("p", { class: "hist" }, "No changes since import."));
+}
+
+async function openCompany(name) {
+  let c;
+  try { c = await api("/api/company?" + new URLSearchParams({ name })); } catch (e) { return toast(e.message); }
+  const sum = cat => c.deals.filter(d => d.stage_category === cat).reduce((a, d) => a + (d.amount || 0), 0);
+  const contactForm = h("div", { class: "grid2" }, field("Name", "name", ""), field("Job title", "title", ""), field("Email", "email", "", "email"), field("Phone", "phone", "", "tel"));
+  showDrawer(
+    h("div", { class: "row", style: "margin-top:0" }, h("span", { class: "pill" }, "Company"), h("span", { class: "spacer" }), closeBtn()),
+    h("h2", {}, c.name),
+    h("div", { class: "grid2" },
+      h("div", { class: "kpi" }, h("div", { class: "v" }, gbp(sum("open"))), h("div", { class: "l" }, "Open pipeline")),
+      h("div", { class: "kpi" }, h("div", { class: "v" }, gbp(sum("won"))), h("div", { class: "l" }, "Won"))),
+    h("h3", {}, `Deals (${c.deals.length})`),
+    c.deals.map(d => h("div", { class: "mini" }, h("button", { class: "link", onclick: () => openDeal(d.id) }, d.name),
+      h("span", {}, h("span", { class: "pill " + d.stage_category }, d.stage), " ", gbp(d.amount)))),
+    h("h3", {}, `Contacts (${c.contacts.length})`),
+    c.contacts.length ? c.contacts.map(p => h("div", { class: "mini" }, h("div", {}, h("div", {}, p.name), h("div", { class: "hist" }, p.title || "")),
+      h("div", { class: "hist", style: "text-align:right" }, p.email ? h("div", {}, h("a", { href: "mailto:" + p.email }, p.email)) : null, p.phone ? h("div", {}, p.phone) : null)))
+      : h("p", { class: "hist" }, "No contacts yet."),
+    h("h3", {}, "Add contact"), contactForm,
+    h("div", { class: "row" }, h("button", { class: "primary", onclick: async () => {
+      try { await api("/api/contacts", { ...formValues(contactForm), company: c.name }); toast("Contact added"); openCompany(c.name); } catch (e) { toast(e.message); } } }, "Add contact")));
+}
+
+function newDeal() {
+  const form = h("div", {}, h("div", { class: "grid2" }, field("Deal name", "name", ""), field("Company", "company", ""), field("Stage", "stage", "Prospect"),
+    field("Amount (£)", "amount", null, "number"), field("Close date", "close_date", "", "date"), field("Owner", "owner", "")),
+    h("label", { class: "full" }, "Next step", h("input", { name: "next_step" })));
+  showDrawer(h("div", { class: "row", style: "margin-top:0" }, h("h2", { style: "margin:0" }, "New deal"), h("span", { class: "spacer" }), closeBtn()),
+    h("p", { class: "hint" }, "Name it “Company - Description”, e.g. “Acme - ITSM Health Check”."),
+    form, h("div", { class: "row" }, h("button", { class: "primary", onclick: async () => {
+      try { const d = await api("/api/deals", formValues(form)); toast("Created"); load(); openDeal(d.id); } catch (e) { toast(e.message); } } }, "Create deal")));
+}
+
+/* ---------- CSV export ---------- */
+function exportCsv() {
+  const deals = shownDeals();
+  const cols = ["id", "hubspot_id", "name", "company", "stage", "amount", "close_date", "owner", "next_step", "updated_at"];
+  // Prefix cells starting with = + - @ so spreadsheet apps don't treat them as formulas.
+  const cell = v => { let s = v == null ? "" : String(v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const csv = [cols.join(","), ...deals.map(d => cols.map(c => cell(d[c])).join(","))].join("\r\n");
+  const a = h("a", { href: URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv" })), download: `tpp-crm-deals-${TODAY}.csv` });
+  document.body.append(a); a.click(); a.remove();
+  toast(`Exported ${deals.length} deals`);
+}
+
+/* ---------- wiring ---------- */
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("active", x === b));
+  VIEW = b.dataset.view; SORT = VIEW === "board" ? "stage" : "updated";
+  $("#kpis").style.display = VIEW === "tasks" ? "none" : "";
+  $("#overdueOnly").parentElement.style.display = $("#exportCsv").style.display = VIEW === "tasks" ? "none" : "";
+  load();
+});
+let timer; $("#q").oninput = () => { clearTimeout(timer); timer = setTimeout(load, 200); };
+$("#owner").onchange = load;
+$("#overdueOnly").onchange = render;
+$("#newDeal").onclick = newDeal;
+$("#exportCsv").onclick = exportCsv;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+
+(async () => {
+  META = await api("/api/meta");
+  META.owners.forEach(o => $("#owner").append(h("option", { value: o }, o)));
+  document.body.append(h("datalist", { id: "owners" }, META.owners.map(o => h("option", { value: o }))));
+  load();
+})();
+</script>
+</body>
+</html>

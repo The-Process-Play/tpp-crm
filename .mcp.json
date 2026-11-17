@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "tpp-crm": {
+      "command": "python3",
+      "args": ["crm/mcp_server.py"],
+      "env": { "TPP_CRM_USER": "${TPP_CRM_USER:-}" }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "crm-web",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "crm/web.py"
+      ],
+      "port": 8765
+    }
+  ]
+}
